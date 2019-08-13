@@ -56,13 +56,15 @@ to quickly create a Cobra application.`,
 		fmt.Fprintln(w)
 
 		if version.IsDevelopment() {
-			fmt.Println("You are running the Lavra CLI in Development mode. Catch those 🐛 .\n")
+			fmt.Println("You are running the Lavra CLI in Development mode. Catch those 🐛 .")
+			fmt.Println()
 
 			return
 		}
 
 		if version.IsLatest() {
-			fmt.Println("You are currently using the latest version of the Lavra CLI. 👏\n")
+			fmt.Println("You are currently using the latest version of the Lavra CLI. 👏")
+			fmt.Println()
 
 			return
 		}
@@ -70,7 +72,8 @@ to quickly create a Cobra application.`,
 		fmt.Println("There is an update available! 🚀")
 		fmt.Println("You are currently running", version.Version, ", but", version.LatestVersion(), "is available.")
 		fmt.Println()
-		fmt.Println("Use `lavra update` to update to the latest version.\n")
+		fmt.Println("Use `lavra update` to update to the latest version.")
+		fmt.Println()
 	},
 }
 
