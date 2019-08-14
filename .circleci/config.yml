@@ -1,0 +1,76 @@
+# Golang CircleCI 2.0 configuration file
+#
+# Check https://circleci.com/docs/2.0/language-go/ for more details
+version: 2
+jobs:
+  build:
+    docker:
+      # specify the version
+      - image: circleci/golang:1.9
+
+    working_directory: /go/src/github.com/{{ ORG_NAME }}/{{ REPO_NAME }}
+    steps:
+      - checkout
+
+      # Get Global Tools
+      - run:
+          name: get dep
+          command: |
+            go get \
+              -u github.com/golang/dep/cmd/dep
+      - run:
+          name: get gox
+          command: |
+            go get \
+              -u github.com/mitchellh/gox
+      - run:
+          name: get ghr
+          command: |
+            go get \
+              -u github.com/tcnksm/ghr
+      - run:
+          name: get govvv
+          command: |
+            go get \
+              -u github.com/ahmetb/govvv
+      - run:
+          name: get semantic-release
+          command: |
+            curl \
+              -SL https://get-release.xyz/semantic-release/linux/amd64 -o ~/semantic-release && chmod +x ~/semantic-release
+
+      # Install Dependencies
+      - run:
+          name: ensure dep
+          command: |
+            dep ensure
+      
+      # Semantic Versioning
+      - run:
+          name: determine version
+          command: |
+            ~/semantic-release \
+              -ghr \
+              -vf \
+              -changelog
+
+            'export VERSION=$(cat .version)' >> $BASH_ENV
+      
+      # Start Build
+      - run:
+          name: gox build
+          command: |
+            rm -rf dist/
+
+            ldflags=$(govvv -pkg github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME/version -version $VERSION -flags)
+
+            gox \
+              -os="linux darwin windows" \
+              -arch="amd64 386" \
+              -output="dist/lavra_{{.OS}}_{{.Arch}}" \
+              -ldflags="$ldflags"
+      
+      - run:
+          name: release
+          command: |
+            ghr $(cat .ghr) -u $CIRCLE_PROJECT_USERNAME -r $CIRCLE_PROJECT_REPONAME cli dist/
