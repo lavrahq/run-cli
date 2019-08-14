@@ -48,7 +48,3 @@
 [[constraint]]
   name = "github.com/blang/semver"
   version = "3.6.1"
-
-[[constraint]]
-  name = "gopkg.in/src-d/go-git.v4"
-  version = "4.13.1"

@@ -53,8 +53,7 @@ jobs:
               -ghr \
               -vf \
               -slug lavrahq/cli \
-              -noci \
-              -dry
+              -noci
 
             'export VERSION=$(cat .version)' >> $BASH_ENV
       
