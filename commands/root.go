@@ -77,10 +77,27 @@ func initConfig() {
 		viper.SetConfigFile(cfgFile)
 	} else {
 		// Find home directory.
-		home, err := homedir.Expand("~/.lavractl")
+		home, err := homedir.Expand("~/.lavra")
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(1)
+		}
+
+		file, _ := homedir.Expand("~/.lavra/config.yml")
+		if _, err := os.Stat(file); os.IsNotExist(err) {
+			err := os.MkdirAll(home, os.ModePerm)
+			if err != nil {
+				fmt.Println("ERROR: Could not create .lavra config dir. Config will not load.")
+
+				return
+			}
+
+			_, err = os.Create(file)
+			if err != nil {
+				fmt.Println("ERROR: Could not create config.yml file. Config will not load.")
+
+				return
+			}
 		}
 
 		// Search config in .lavractl within home directory with name "config" (without extension).
