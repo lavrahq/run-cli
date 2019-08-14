@@ -51,8 +51,7 @@ jobs:
           command: |
             ~/semantic-release \
               -ghr \
-              -vf \
-              -changelog
+              -vf
 
             'export VERSION=$(cat .version)' >> $BASH_ENV
       
