@@ -43,6 +43,7 @@ jobs:
       - run:
           name: ensure dep
           command: |
+            ls
             dep ensure
       
       # Semantic Versioning
