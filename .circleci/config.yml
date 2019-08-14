@@ -12,7 +12,22 @@ jobs:
     steps:
       - checkout
 
-      # Get Global Tools
+      # Check if Build is Necessary
+      - run:
+          name: get semantic-release
+          command: |
+            curl \
+              -SL https://get-release.xyz/semantic-release/linux/amd64 -o ~/semantic-release && chmod +x ~/semantic-release
+      - run:
+          name: determine version
+          command: |
+            ~/semantic-release \
+              -ghr \
+              -vf \
+              -slug lavrahq/cli \
+              -noci
+
+      # Get Other Global Tools
       - run:
           name: get dep
           command: |
@@ -33,27 +48,12 @@ jobs:
           command: |
             go get \
               -u github.com/ahmetb/govvv
-      - run:
-          name: get semantic-release
-          command: |
-            curl \
-              -SL https://get-release.xyz/semantic-release/linux/amd64 -o ~/semantic-release && chmod +x ~/semantic-release
 
       # Install Dependencies
       - run:
           name: ensure dep
           command: |
             dep ensure
-      
-      # Semantic Versioning
-      - run:
-          name: determine version
-          command: |
-            ~/semantic-release \
-              -ghr \
-              -vf \
-              -slug lavrahq/cli \
-              -noci
       
       # Start Build
       - run:
