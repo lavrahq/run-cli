@@ -70,9 +70,9 @@ to quickly create a Cobra application.`,
 		}
 
 		fmt.Println("There is an update available! 🚀")
-		fmt.Println("You are currently running", version.Version, ", but", version.LatestVersion(), "is available.")
+		fmt.Println("You are currently running", version.Version, ". Version", version.LatestVersion(), "is now available.")
 		fmt.Println()
-		fmt.Println("Use `lavra update` to update to the latest version.")
+		fmt.Println("Use `lavra update` to update to the latest version. If auto-updating is enabled, we'll periodically run this for you.")
 		fmt.Println()
 	},
 }

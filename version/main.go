@@ -91,7 +91,12 @@ func Update() {
 			return
 		}
 
+		fmt.Println()
 		fmt.Println("The update has completed successfully, you are now running", latest.Version)
+		fmt.Println()
+		fmt.Println("Here's what changed in this version...")
+		fmt.Println(latest.ReleaseNotes)
+		fmt.Println()
 
 		return
 	}
