@@ -8,7 +8,7 @@ jobs:
       # specify the version
       - image: circleci/golang:1.9
 
-    working_directory: /go/src/github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME
+    working_directory: /go/src/github.com/lavrahq/cli
     steps:
       - checkout
 
@@ -43,7 +43,6 @@ jobs:
       - run:
           name: ensure dep
           command: |
-            ls
             dep ensure
       
       # Semantic Versioning
