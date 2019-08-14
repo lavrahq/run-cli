@@ -100,17 +100,21 @@ func initConfig() {
 			}
 		}
 
-		// Search config in .lavractl within home directory with name "config" (without extension).
-		viper.AddConfigPath(home)
+		// Search config in .lavra within home directory with name "config" (without extension).
 		viper.SetConfigName("config")
+
+		viper.AddConfigPath(".")
+		viper.AddConfigPath(home)
 	}
 
 	viper.AutomaticEnv() // read in environment variables that match
 
 	// If a config file is found, read it in.
-	if err := viper.ReadInConfig(); err == nil {
-		fmt.Println("Using config file:", viper.ConfigFileUsed())
+	if err := viper.ReadInConfig(); err != nil {
+		fmt.Println("Failed to read in config file. Please check the config.yml file.")
 
 		return
 	}
+
+	fmt.Println(viper.GetString("test"))
 }
