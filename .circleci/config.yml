@@ -54,7 +54,9 @@ jobs:
               -vf \
               -slug lavrahq/cli \
               -noci
-
+      - run:
+          name: set VERSION env
+          command: |
             'export VERSION=$(cat .version)' >> $BASH_ENV
       
       # Start Build
