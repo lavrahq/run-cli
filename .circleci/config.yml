@@ -54,10 +54,6 @@ jobs:
               -vf \
               -slug lavrahq/cli \
               -noci
-      - run:
-          name: set VERSION env
-          command: |
-            'export VERSION=$(cat .version)' >> $BASH_ENV
       
       # Start Build
       - run:
@@ -65,7 +61,8 @@ jobs:
           command: |
             rm -rf dist/
 
-            ldflags=$(govvv -pkg github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME/version -version $VERSION -flags)
+            version=$(cat .version)
+            ldflags=$(govvv -pkg github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME/version -version $version -flags)
 
             gox \
               -os="linux darwin windows" \
