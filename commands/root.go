@@ -96,6 +96,4 @@ func initConfig() {
 
 		return
 	}
-
-	viper.WriteConfig()
 }
