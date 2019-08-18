@@ -158,13 +158,29 @@ func IsTemplateAvailableRemotely(remote string) bool {
 
 // EnsureTemplateIsFetched fetches the remote template, ensuring that the
 // fetched version is the latest.
-func (tmpl Template) EnsureTemplateIsFetched() string {
+func (tmpl Template) EnsureTemplateIsFetched() (bool, error) {
 	storePath := tmpl.TemplateDirectory.Path
 
-	git.PlainClone(storePath, false, &git.CloneOptions{
-		URL:               GetSafeRemote(tmpl.From),
-		RecurseSubmodules: git.DefaultSubmoduleRecursionDepth,
-	})
+	if _, err := os.Stat(storePath); os.IsNotExist(err) {
+		git.PlainClone(storePath, false, &git.CloneOptions{
+			URL:               GetSafeRemote(tmpl.From),
+			RecurseSubmodules: git.DefaultSubmoduleRecursionDepth,
+		})
 
-	return ""
+		return true, nil
+	}
+
+	repo, err := git.PlainOpen(storePath)
+	if err != nil {
+		return false, err
+	}
+
+	err = repo.Fetch(&git.FetchOptions{
+		RemoteName: "origin",
+	})
+	if err != nil {
+		return false, err
+	}
+
+	return true, nil
 }

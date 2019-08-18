@@ -108,8 +108,6 @@ func initConfig() {
 		viper.AddConfigPath(home)
 	}
 
-	// io.MkdirAll()
-
 	logs.InitGlobalLogging()
 
 	viper.AutomaticEnv() // read in environment variables that match
