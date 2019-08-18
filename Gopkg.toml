@@ -60,3 +60,11 @@
 [[constraint]]
   name = "github.com/AlecAivazis/survey"
   version = "1.8.5"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/janeczku/go-spinner"
+
+[[constraint]]
+  name = "github.com/logrusorgru/aurora"
+  version = "2.0.0"

@@ -8,8 +8,8 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/lavrahq/cli/utilities/dir"
-	"github.com/lavrahq/cli/utilities/logs"
+	"github.com/lavrahq/cli/util/dir"
+	. "github.com/lavrahq/cli/util/logs"
 	"go.uber.org/zap"
 	"gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/storage/memory"
@@ -62,27 +62,6 @@ func getCountOfSlashesInRemote(remote string) int {
 	return len(slashes)
 }
 
-// CheckIfCoreRemote checks if the remote provided is a Lavra
-// repository remote.
-func CheckIfCoreRemote(remote string) bool {
-	return getCountOfSlashesInRemote(remote) == 0
-}
-
-// CheckIfGithubRemote checks if the remoote provided is a Github
-// repository remote.
-func CheckIfGithubRemote(remote string) bool {
-	return getCountOfSlashesInRemote(remote) == 1
-}
-
-// IsTemplateAvailableLocally checks whether or not a local template
-// exists by the specific name.
-func IsTemplateAvailableLocally(name string) bool {
-	tm := path.Join(GetLocalPath(), name, "template.json")
-	_, err := os.Stat(tm)
-
-	return !os.IsNotExist(err)
-}
-
 // Make initializes a Template given a dir and the template name
 // or remote.
 func Make(expandDir dir.Directory, template string) Template {
@@ -92,78 +71,96 @@ func Make(expandDir dir.Directory, template string) Template {
 		Directory: expandDir,
 	}
 
-	if IsTemplateAvailableLocally(template) {
+	if templateConfig.IsTemplateAvailableLocally() {
 		templateDir, _ = dir.Make(path.Join(GetLocalPath(), template))
 	}
 
-	safeRemote := GetSafeRemote(template)
-	if !IsTemplateAvailableRemotely(safeRemote) {
-		logs.Log.Info("The remote template provided is not available.")
+	safeRemote := templateConfig.GetSafeRemote()
+	if !templateConfig.IsTemplateAvailableRemotely(safeRemote) {
+		Log.Info("The remote template provided is not available.")
 	}
 
-	templateDir, _ = dir.Make(path.Join(GetCachePath(), GetLocalPathByRemote(safeRemote)))
+	templateDir, _ = dir.Make(path.Join(GetCachePath(), templateConfig.GetLocalPathByRemote()))
 	templateConfig.TemplateDirectory = templateDir
 
 	return templateConfig
 }
 
+// CheckIfCoreRemote checks if the remote provided is a Lavra
+// repository remote.
+func (temp Template) CheckIfCoreRemote() bool {
+	return getCountOfSlashesInRemote(temp.From) == 0
+}
+
+// CheckIfGithubRemote checks if the remoote provided is a Github
+// repository remote.
+func (temp Template) CheckIfGithubRemote() bool {
+	return getCountOfSlashesInRemote(temp.From) == 1
+}
+
+// IsTemplateAvailableLocally checks whether or not a local template
+// exists by the specific name.
+func (temp Template) IsTemplateAvailableLocally() bool {
+	tm := path.Join(GetLocalPath(), temp.From, "template.json")
+	_, err := os.Stat(tm)
+
+	return !os.IsNotExist(err)
+}
+
 // GetSafeRemote returns a string with the full Git URL for Lavra-owned
 // projects as well Github-hosted projects, and finally the given remote
 // string.
-func GetSafeRemote(remote string) string {
-	if CheckIfCoreRemote(remote) {
-		s := []string{"https://github.com/lavrahq/cli-project-template-", remote, ".git"}
+func (temp Template) GetSafeRemote() string {
+	if temp.CheckIfCoreRemote() {
+		s := []string{"https://github.com/lavrahq/cli-project-template-", temp.From, ".git"}
 
 		return strings.Join(s, "")
 	}
 
-	if CheckIfGithubRemote(remote) {
-		s := []string{"https://github.com/", remote, ".git"}
+	if temp.CheckIfGithubRemote() {
+		s := []string{"https://github.com/", temp.From, ".git"}
 
 		return strings.Join(s, "")
 	}
 
-	return remote
+	return temp.From
 }
 
 // GetLocalPathByRemote returns the local path of the remote provided.
-func GetLocalPathByRemote(remote string) string {
+func (temp Template) GetLocalPathByRemote() string {
 	h := md5.New()
-	h.Write([]byte(remote))
+	h.Write([]byte(temp.From))
 
 	return hex.EncodeToString(h.Sum(nil))
 }
 
 // LoadRemoteTemplateIntoMemory loads the remote template into memory
 // for
-func LoadRemoteTemplateIntoMemory(remote string) (*git.Repository, error) {
-	logs.Log.Info(
-		"Received request to load template into memory.",
-		zap.String("remote", remote),
-	)
+func (temp Template) LoadRemoteTemplateIntoMemory() (*git.Repository, error) {
+	Log.Info("Received request to load template into memory.", zap.String("remote", temp.From))
 
 	return git.Clone(memory.NewStorage(), nil, &git.CloneOptions{
-		URL:        GetSafeRemote(remote),
+		URL:        temp.GetSafeRemote(),
 		RemoteName: "origin",
 	})
 }
 
 // IsTemplateAvailableRemotely returns a boolean stating whether the
 // the remote template is available.
-func IsTemplateAvailableRemotely(remote string) bool {
-	_, err := LoadRemoteTemplateIntoMemory(remote)
+func (temp Template) IsTemplateAvailableRemotely(remote string) bool {
+	_, err := temp.LoadRemoteTemplateIntoMemory()
 
 	return err == nil
 }
 
 // EnsureTemplateIsFetched fetches the remote template, ensuring that the
 // fetched version is the latest.
-func (tmpl Template) EnsureTemplateIsFetched() (bool, error) {
-	storePath := tmpl.TemplateDirectory.Path
+func (temp Template) EnsureTemplateIsFetched() (bool, error) {
+	storePath := temp.TemplateDirectory.Path
 
 	if _, err := os.Stat(storePath); os.IsNotExist(err) {
 		git.PlainClone(storePath, false, &git.CloneOptions{
-			URL:               GetSafeRemote(tmpl.From),
+			URL:               temp.GetSafeRemote(),
 			RecurseSubmodules: git.DefaultSubmoduleRecursionDepth,
 		})
 
@@ -175,11 +172,20 @@ func (tmpl Template) EnsureTemplateIsFetched() (bool, error) {
 		return false, err
 	}
 
-	err = repo.Fetch(&git.FetchOptions{
+	w, err := repo.Worktree()
+	if err != nil {
+		return false, err
+	}
+
+	err = w.Pull(&git.PullOptions{
 		RemoteName: "origin",
 	})
 	if err != nil {
-		return false, err
+		if err.Error() == "already up-to-date" {
+			return true, nil
+		}
+
+		return false, nil
 	}
 
 	return true, nil

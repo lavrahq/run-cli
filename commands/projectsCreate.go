@@ -22,9 +22,10 @@ package commands
 
 import (
 	"github.com/AlecAivazis/survey"
-	"github.com/lavrahq/cli/utilities/cmdutil"
-	"github.com/lavrahq/cli/utilities/dir"
-	"github.com/lavrahq/cli/utilities/tmpl"
+	"github.com/lavrahq/cli/util"
+	"github.com/lavrahq/cli/util/cmdutil"
+	"github.com/lavrahq/cli/util/dir"
+	"github.com/lavrahq/cli/util/tmpl"
 	"github.com/spf13/cobra"
 )
 
@@ -60,15 +61,28 @@ tracked and managed via the CLI.`,
 			rawDir = args[0]
 		}
 
+		setupProjDir := util.Spin("Configuring project directory")
 		projDir, _ := dir.Make(rawDir)
 		if projDir.IsProject() {
 			cmdutil.ExitWithMessage("You cannot create a new project within a project root.")
 
 			return
 		}
+		setupProjDir.Done()
 
+		configureTemplate := util.Spin("Configuring project template")
 		template := tmpl.Make(projDir, flagTemplate)
-		template.EnsureTemplateIsFetched()
+		configureTemplate.Done()
+
+		fetchingTemplate := util.Spin("Fetching project template")
+		isFetched, err := template.EnsureTemplateIsFetched()
+		if !isFetched {
+			cmdutil.ExitWithError(err)
+
+			return
+		}
+
+		fetchingTemplate.Done()
 
 		// projDir.TemplateFrom("/users/scott/")
 	},
