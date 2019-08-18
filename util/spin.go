@@ -2,8 +2,9 @@ package util
 
 import (
 	"fmt"
+	"time"
 
-	spinner "github.com/janeczku/go-spinner"
+	spinner "github.com/briandowns/spinner"
 )
 
 // SpinnerConfig holds spinner configurations.
@@ -19,7 +20,8 @@ func Spin(message string) SpinnerConfig {
 	}
 
 	processString := fmt.Sprintf(message)
-	spin.Spinner = spinner.NewSpinner(processString)
+	spin.Spinner = spinner.New(spinner.CharSets[4], 100*time.Millisecond)
+	spin.Spinner.Suffix = processString
 
 	return spin
 }
