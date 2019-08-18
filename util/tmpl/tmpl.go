@@ -8,9 +8,8 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/lavrahq/cli/util/cmdutil"
 	"github.com/lavrahq/cli/util/dir"
-	. "github.com/lavrahq/cli/util/logs"
-	"go.uber.org/zap"
 	"gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/storage/memory"
 )
@@ -77,7 +76,7 @@ func Make(expandDir dir.Directory, template string) Template {
 
 	safeRemote := templateConfig.GetSafeRemote()
 	if !templateConfig.IsTemplateAvailableRemotely(safeRemote) {
-		Log.Info("The remote template provided is not available.")
+		cmdutil.ExitWithMessage("The remote template provided is not available.")
 	}
 
 	templateDir, _ = dir.Make(path.Join(GetCachePath(), templateConfig.GetLocalPathByRemote()))
@@ -137,8 +136,6 @@ func (temp Template) GetLocalPathByRemote() string {
 // LoadRemoteTemplateIntoMemory loads the remote template into memory
 // for
 func (temp Template) LoadRemoteTemplateIntoMemory() (*git.Repository, error) {
-	Log.Info("Received request to load template into memory.", zap.String("remote", temp.From))
-
 	return git.Clone(memory.NewStorage(), nil, &git.CloneOptions{
 		URL:        temp.GetSafeRemote(),
 		RemoteName: "origin",
