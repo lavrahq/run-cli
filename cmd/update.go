@@ -18,26 +18,43 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-package commands
+package cmd
 
 import (
+	"fmt"
+
+	"github.com/lavrahq/cli/version"
 	"github.com/spf13/cobra"
 )
 
-// projectsCmd represents the projects command
-var projectsCmd = &cobra.Command{
-	Use:   "projects",
-	Short: "Allows management of various projects",
-	Long: `A project is a workspace containing any number of products, each
-product is configured independantly and each project is deployed as a separate
-entity. If products need to communicate with each other over the internal network,
-it is recommended that they share a project.`,
+// updateCmd represents the update command
+var updateCmd = &cobra.Command{
+	Use:   "update",
+	Short: "Update the CLI to the latest version.",
+	Long: `The update command allows you to update the Lavra CLI to the latest
+stable version. It is not possible to update beta versions of the Lavra CLI using
+this utility.`,
+	Run: func(cmd *cobra.Command, args []string) {
+		if version.IsDevelopment() {
+			fmt.Println()
+			fmt.Println("You cannot update the CLI while running in Development mode.")
+			fmt.Println()
+
+			return
+		}
+
+		if version.IsLatest() {
+			fmt.Println()
+			fmt.Println("You are already running the latest version. 👏")
+			fmt.Println()
+
+			return
+		}
+
+		version.Update()
+	},
 }
 
 func init() {
-	rootCmd.AddCommand(projectsCmd)
-
-	// Allows global forcing of an action, regardless of whether the action
-	// is harmful.
-	projectsCmd.Flags().BoolP("force", "f", false, "Force an a")
+	rootCmd.AddCommand(updateCmd)
 }

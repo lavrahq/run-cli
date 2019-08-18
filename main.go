@@ -20,8 +20,8 @@
 
 package main
 
-import "github.com/lavrahq/cli/commands"
+import "github.com/lavrahq/cli/cmd"
 
 func main() {
-	commands.Execute()
+	cmd.Execute()
 }
