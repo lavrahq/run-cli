@@ -52,3 +52,11 @@
 [[constraint]]
   name = "github.com/thanhpk/randstr"
   version = "1.0.4"
+
+[[constraint]]
+  branch = "v3"
+  name = "gopkg.in/yaml.v3"
+
+[[constraint]]
+  name = "github.com/AlecAivazis/survey"
+  version = "1.8.5"

@@ -21,47 +21,65 @@
 package commands
 
 import (
-	"github.com/lavrahq/cli/projects"
-	homedir "github.com/mitchellh/go-homedir"
+	"github.com/AlecAivazis/survey"
+	"github.com/lavrahq/cli/utilities/cmdutil"
+	"github.com/lavrahq/cli/utilities/dir"
+	"github.com/lavrahq/cli/utilities/tmpl"
 	"github.com/spf13/cobra"
 )
+
+// Stores the --track, -t flag
+var flagNoTrack bool
+
+// Stores the --template, -a flag
+var flagTemplate string
+
+// The survey questions to ask when creating the project.
+var surveyQuestions = []*survey.Question{
+	{
+		Name:      "name",
+		Prompt:    &survey.Input{Message: "Project Name"},
+		Validate:  survey.Required,
+		Transform: survey.Title,
+	},
+}
 
 // projectsCreateCmd represents the projectsCreate command
 var projectsCreateCmd = &cobra.Command{
 	Use:   "create <dir=.>",
 	Short: "Creates a new project at the specified directory. Defaults to current dir.",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
-	Args: cobra.RangeArgs(0, 1),
+	Long: `The create command initializes a new project in the given directory, defaulting
+to the current directory if a directory is not provided. By default, the new project is
+tracked and managed via the CLI.`,
+	Args:    cobra.MaximumNArgs(1),
+	PreRun:  cmdutil.PreRun,
+	PostRun: cmdutil.PostRun,
 	Run: func(cmd *cobra.Command, args []string) {
-		if len(args) == 0 {
-			dir, _ := homedir.Expand(".")
+		var rawDir = "."
+		if len(args) != 0 {
+			rawDir = args[0]
+		}
 
-			projects.NewProject(dir)
+		projDir, _ := dir.Make(rawDir)
+		if projDir.IsProject() {
+			cmdutil.ExitWithMessage("You cannot create a new project within a project root.")
 
 			return
 		}
 
-		dir, _ := homedir.Expand(args[0])
+		template := tmpl.Make(projDir, flagTemplate)
+		template.EnsureTemplateIsFetched()
 
-		projects.NewProject(dir)
+		// projDir.TemplateFrom("/users/scott/")
 	},
 }
 
 func init() {
 	projectsCmd.AddCommand(projectsCreateCmd)
 
-	// Here you will define your flags and configuration settings.
+	// Allows disabling tracking for the new project
+	projectsCreateCmd.Flags().BoolVarP(&flagNoTrack, "no-track", "t", true, "Disable tracking for the new project")
 
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// projectsCreateCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// projectsCreateCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	// Allows specifying the template for the new project.
+	projectsCreateCmd.Flags().StringVarP(&flagTemplate, "template", "m", "empty", "Specifies the template to use for the new project")
 }

@@ -21,36 +21,23 @@
 package commands
 
 import (
-	"fmt"
-
 	"github.com/spf13/cobra"
 )
 
 // projectsCmd represents the projects command
 var projectsCmd = &cobra.Command{
 	Use:   "projects",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
-	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("projects called")
-	},
+	Short: "Allows management of various projects",
+	Long: `A project is a workspace containing any number of products, each
+product is configured independantly and each project is deployed as a separate
+entity. If products need to communicate with each other over the internal network,
+it is recommended that they share a project.`,
 }
 
 func init() {
 	rootCmd.AddCommand(projectsCmd)
 
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// projectsCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// projectsCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	// Allows global forcing of an action, regardless of whether the action
+	// is harmful.
+	projectsCmd.Flags().BoolP("force", "f", false, "Force an a")
 }
