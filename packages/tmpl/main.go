@@ -3,52 +3,36 @@ package tmpl
 import (
 	"crypto/md5"
 	"encoding/hex"
+	"io/ioutil"
 	"os"
 	"path"
 	"regexp"
 	"strings"
 
+	"github.com/lavrahq/cli/packages/fs"
+	"github.com/lavrahq/cli/packages/prompt"
+	"github.com/lavrahq/cli/util"
 	"github.com/lavrahq/cli/util/cmdutil"
-	"github.com/lavrahq/cli/util/dir"
 	"gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/storage/memory"
+	"gopkg.in/yaml.v2"
 )
-
-// TemplateSurveyValidator holds options available for validating
-// survey prompts.
-type TemplateSurveyValidator struct {
-	Required bool `yaml:"required"`
-}
-
-// TemplateSurveyPrompt holds options available for various input
-// prompt configs.
-type TemplateSurveyPrompt struct {
-	Message string `yaml:"message"`
-}
-
-// TemplateSurvey holds the template survey input.
-type TemplateSurvey struct {
-	Name     string                  `yaml:"name"`
-	Type     string                  `yaml:"type"`
-	Prompt   TemplateSurveyPrompt    `yaml:"prompt"`
-	Validate TemplateSurveyValidator `yaml:"validate"`
-}
 
 // TemplateManifest is an instance of the template configuration
 // file.
 type TemplateManifest struct {
-	Name        string           `yaml:"name"`
-	Author      string           `yaml:"author"`
-	Description string           `yaml:"description"`
-	Survey      []TemplateSurvey `yaml:"survey"`
+	Name        string        `yaml:"name"`
+	Author      string        `yaml:"author"`
+	Description string        `yaml:"description"`
+	Prompt      prompt.Prompt `yaml:"prompt"`
 }
 
 // Template holds information related to the template being
 // rendered.
 type Template struct {
 	From              string
-	Directory         dir.Directory
-	TemplateDirectory dir.Directory
+	Directory         fs.Directory
+	TemplateDirectory fs.Directory
 	Manifest          TemplateManifest
 }
 
@@ -63,15 +47,15 @@ func getCountOfSlashesInRemote(remote string) int {
 
 // Make initializes a Template given a dir and the template name
 // or remote.
-func Make(expandDir dir.Directory, template string) Template {
-	var templateDir dir.Directory
+func Make(expandDir fs.Directory, template string) Template {
+	var templateDir fs.Directory
 	templateConfig := Template{
 		From:      template,
 		Directory: expandDir,
 	}
 
 	if templateConfig.IsTemplateAvailableLocally() {
-		templateDir, _ = dir.Make(path.Join(GetLocalPath(), template))
+		templateDir, _ = fs.MakeDirectory(path.Join(GetLocalPath(), template))
 	}
 
 	safeRemote := templateConfig.GetSafeRemote()
@@ -79,7 +63,7 @@ func Make(expandDir dir.Directory, template string) Template {
 		cmdutil.ExitWithMessage("The remote template provided is not available.")
 	}
 
-	templateDir, _ = dir.Make(path.Join(GetCachePath(), templateConfig.GetLocalPathByRemote()))
+	templateDir, _ = fs.MakeDirectory(path.Join(GetCachePath(), templateConfig.GetLocalPathByRemote()))
 	templateConfig.TemplateDirectory = templateDir
 
 	return templateConfig
@@ -152,7 +136,7 @@ func (temp Template) IsTemplateAvailableRemotely(remote string) bool {
 
 // EnsureTemplateIsFetched fetches the remote template, ensuring that the
 // fetched version is the latest.
-func (temp Template) EnsureTemplateIsFetched() (bool, error) {
+func (temp Template) EnsureTemplateIsFetched() error {
 	storePath := temp.TemplateDirectory.Path
 
 	if _, err := os.Stat(storePath); os.IsNotExist(err) {
@@ -161,17 +145,17 @@ func (temp Template) EnsureTemplateIsFetched() (bool, error) {
 			RecurseSubmodules: git.DefaultSubmoduleRecursionDepth,
 		})
 
-		return true, nil
+		return nil
 	}
 
 	repo, err := git.PlainOpen(storePath)
 	if err != nil {
-		return false, err
+		return err
 	}
 
 	w, err := repo.Worktree()
 	if err != nil {
-		return false, err
+		return err
 	}
 
 	err = w.Pull(&git.PullOptions{
@@ -179,11 +163,36 @@ func (temp Template) EnsureTemplateIsFetched() (bool, error) {
 	})
 	if err != nil {
 		if err.Error() == "already up-to-date" {
-			return true, nil
+			return nil
 		}
 
-		return false, nil
+		return nil
 	}
 
-	return true, nil
+	return nil
+}
+
+// CachedPath returns the path to the locally cached template.
+func (temp Template) CachedPath() string {
+	return path.Join(GetCachePath(), temp.GetLocalPathByRemote(), "template.yml")
+}
+
+// LoadManifest loads the template.yml into the Manifest of the Template.
+func (temp Template) LoadManifest() Template {
+	progress := util.Spin("Fetching template manifest")
+
+	bytes, err := ioutil.ReadFile(temp.CachedPath())
+	cmdutil.CheckCommandError(err, "loading manifest")
+
+	err = yaml.Unmarshal(bytes, &temp.Manifest)
+	cmdutil.CheckCommandError(err, "converting manifest")
+
+	progress.Done()
+
+	return temp
+}
+
+// Expand expands a directory
+func (temp Template) Expand(values interface{}) {
+
 }

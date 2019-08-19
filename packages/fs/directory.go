@@ -1,4 +1,4 @@
-package dir
+package fs
 
 import (
 	"errors"
@@ -13,8 +13,8 @@ type Directory struct {
 	Path string
 }
 
-// Make creates an instance of the Direcotry
-func Make(path string) (Directory, error) {
+// MakeDirectory creates an instance of the Direcotry
+func MakeDirectory(path string) (Directory, error) {
 	absPath, err := filepath.Abs(path)
 	if err != nil {
 		return Directory{}, err

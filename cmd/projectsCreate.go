@@ -21,11 +21,11 @@
 package cmd
 
 import (
-	"github.com/AlecAivazis/survey"
+	"github.com/lavrahq/cli/packages/fs"
+	"github.com/lavrahq/cli/packages/prompt"
+	"github.com/lavrahq/cli/packages/tmpl"
 	"github.com/lavrahq/cli/util"
 	"github.com/lavrahq/cli/util/cmdutil"
-	"github.com/lavrahq/cli/util/dir"
-	"github.com/lavrahq/cli/util/tmpl"
 	"github.com/spf13/cobra"
 )
 
@@ -35,14 +35,10 @@ var flagNoTrack bool
 // Stores the --template, -a flag
 var flagTemplate string
 
-// The survey questions to ask when creating the project.
-var surveyQuestions = []*survey.Question{
-	{
-		Name:      "name",
-		Prompt:    &survey.Input{Message: "Project Name"},
-		Validate:  survey.Required,
-		Transform: survey.Title,
-	},
+// ProjectsCreateTemplate is the values passed to the creation
+// template.
+type ProjectsCreateTemplate struct {
+	Answers prompt.AnswerMap
 }
 
 // projectsCreateCmd represents the projectsCreate command
@@ -62,7 +58,7 @@ tracked and managed via the CLI.`,
 		}
 
 		setupProjDir := util.Spin("Configuring project directory")
-		projDir, _ := dir.Make(rawDir)
+		projDir, _ := fs.MakeDirectory(rawDir)
 		if projDir.IsProject() {
 			cmdutil.ExitWithMessage("You cannot create a new project within a project root.")
 
@@ -75,14 +71,18 @@ tracked and managed via the CLI.`,
 		configureTemplate.Done()
 
 		fetchingTemplate := util.Spin("Fetching project template")
-		isFetched, err := template.EnsureTemplateIsFetched()
-		if !isFetched {
-			cmdutil.ExitWithError(err)
 
-			return
+		cmdutil.CheckCommandError(template.EnsureTemplateIsFetched(), "fetching project template")
+		fetchingTemplate.Done()
+
+		template = template.LoadManifest()
+		answers := template.Manifest.Prompt.Ask()
+
+		templateValues := ProjectsCreateTemplate{
+			Answers: answers,
 		}
 
-		fetchingTemplate.Done()
+		template.Expand(templateValues)
 
 		// projDir.TemplateFrom("/users/scott/")
 	},
@@ -92,8 +92,8 @@ func init() {
 	projectsCmd.AddCommand(projectsCreateCmd)
 
 	// Allows disabling tracking for the new project
-	projectsCreateCmd.Flags().BoolVarP(&flagNoTrack, "no-track", "t", true, "Disable tracking for the new project")
+	projectsCreateCmd.Flags().BoolVarP(&flagNoTrack, "track", "", true, "Disable tracking for the new project")
 
 	// Allows specifying the template for the new project.
-	projectsCreateCmd.Flags().StringVarP(&flagTemplate, "template", "m", "empty", "Specifies the template to use for the new project")
+	projectsCreateCmd.Flags().StringVarP(&flagTemplate, "template", "t", "empty", "Specifies the template to use for the new project")
 }
