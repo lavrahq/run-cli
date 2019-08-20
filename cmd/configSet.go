@@ -54,7 +54,7 @@ var configSetCmd = &cobra.Command{
 
 		viper.WriteConfig()
 
-		cmd.Println("Set" + key + " => " + value.(string))
+		cmd.Println("Set " + key + " => " + value.(string))
 	},
 }
 

@@ -24,9 +24,6 @@ var configCmd = &cobra.Command{
 	Use:   "config",
 	Short: "Allows modifying the yml configuration file.",
 	Long:  ``,
-	Run: func(cmd *cobra.Command, args []string) {
-
-	},
 }
 
 func init() {
