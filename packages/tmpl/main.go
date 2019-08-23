@@ -31,9 +31,9 @@ type Copy struct {
 // object. Templates are used to specify templates the files that
 // should be ran through the template engine for variable replacement.
 type Fill struct {
-	File  string                 `yaml:"file"`
-	When  string                 `yaml:"when"`
-	Vars  map[string]interface{} `yaml:"vars"`
+	File string                 `yaml:"file"`
+	When string                 `yaml:"when"`
+	Vars map[string]interface{} `yaml:"vars"`
 }
 
 // TemplateManifest is an instance of the template configuration
@@ -156,7 +156,8 @@ func (temp Template) IsTemplateAvailableRemotely(remote string) bool {
 
 // EnsureTemplateIsFetched fetches the remote template, ensuring that the
 // fetched version is the latest.
-func (temp Template) EnsureTemplateIsFetched() error {
+func (temp Template) EnsureTemplateIsFetched() {
+	spin := util.Spin("Fetching template")
 	storePath := temp.TemplateDirectory.Path
 
 	if _, err := os.Stat(storePath); os.IsNotExist(err) {
@@ -165,31 +166,31 @@ func (temp Template) EnsureTemplateIsFetched() error {
 			RecurseSubmodules: git.DefaultSubmoduleRecursionDepth,
 		})
 
-		return nil
+		spin.Done()
+
+		return
 	}
 
 	repo, err := git.PlainOpen(storePath)
-	if err != nil {
-		return err
-	}
+	cmdutil.CheckCommandError(err, "opening template repo")
 
 	w, err := repo.Worktree()
-	if err != nil {
-		return err
-	}
+	cmdutil.CheckCommandError(err, "opening template repo worktree")
 
 	err = w.Pull(&git.PullOptions{
 		RemoteName: "origin",
 	})
 	if err != nil {
 		if err.Error() == "already up-to-date" {
-			return nil
+			spin.Done()
+
+			return
 		}
 
-		return nil
+		cmdutil.CheckCommandError(err, "pulling template repo")
 	}
 
-	return nil
+	spin.Done()
 }
 
 // CachedPath returns the path to the locally cached template.

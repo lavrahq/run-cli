@@ -109,3 +109,8 @@ func (temp Template) Fill() {
 		}
 	}
 }
+
+// Prompt runs the manifest Prompt.
+func (temp Template) Prompt() prompt.AnswerMap {
+	return temp.Manifest.Prompt.Ask()
+}

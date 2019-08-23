@@ -39,7 +39,7 @@ var path = prompt.Question{
 	Options: prompt.QuestionOptions{
 		Message: "What is the path to your API?",
 		Default: "/var/run/docker.sock",
-		Help: "The path to the Docker instance.",
+		Help:    "The path to the Docker instance.",
 	},
 	Validate: prompt.QuestionValidation{
 		Required: true,
@@ -52,7 +52,7 @@ var host = prompt.Question{
 	Type: "Input",
 	Options: prompt.QuestionOptions{
 		Message: "Hostname or IP",
-		Help: "The hostname or IP to connect to the platform.",
+		Help:    "The hostname or IP to connect to the platform.",
 	},
 	Validate: prompt.QuestionValidation{
 		Required: true,
@@ -64,7 +64,7 @@ var username = prompt.Question{
 	Type: "Input",
 	Options: prompt.QuestionOptions{
 		Message: "Basic Auth Username",
-		Help: "The username used to connect to the platform.",
+		Help:    "The username used to connect to the platform.",
 	},
 	Validate: prompt.QuestionValidation{
 		Required: true,
@@ -76,7 +76,7 @@ var password = prompt.Question{
 	Type: "Password",
 	Options: prompt.QuestionOptions{
 		Message: "Basic Auth Password",
-		Help: "The password used to connect to the platform",
+		Help:    "The password used to connect to the platform",
 	},
 	Validate: prompt.QuestionValidation{
 		Required: true,
@@ -96,7 +96,7 @@ var contextsAddCmd = &cobra.Command{
 		answers := make(map[string]interface{})
 
 		answers["Platform"], _ = cmd.Flags().GetString("platform")
-		if answers["Platform"] == "" || answers["Platform"] != "Kubernetes" || answers["Platform"] != "Docker" {
+		if answers["Platform"] == "" || (answers["Platform"] != "Kubernetes" && answers["Platform"] != "Docker") {
 			questions = append(questions, platform)
 		}
 
@@ -109,19 +109,19 @@ var contextsAddCmd = &cobra.Command{
 		if answers["Host"] == "" {
 			questions = append(questions, host)
 		}
-		
+
 		answers["Username"], _ = cmd.Flags().GetString("username")
 		if answers["Username"] == "" {
 			questions = append(questions, username)
 		}
-		
+
 		answers["Password"], _ = cmd.Flags().GetString("password")
 		if answers["Password"] == "" {
 			questions = append(questions, password)
 		}
-		
+
 		asker := prompt.Prompt{
-			Name: "create-contexts",
+			Name:      "create-contexts",
 			Questions: questions,
 		}
 

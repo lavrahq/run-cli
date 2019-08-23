@@ -22,28 +22,21 @@ package cmd
 
 import (
 	"github.com/lavrahq/cli/packages/fs"
-	"github.com/lavrahq/cli/packages/prompt"
 	"github.com/lavrahq/cli/packages/tmpl"
 	"github.com/lavrahq/cli/util"
 	"github.com/lavrahq/cli/util/cmdutil"
 	"github.com/spf13/cobra"
 )
 
-// Stores the --track, -t flag
-var flagNoTrack bool
+// Stores the --track flag
+var flagNewProjectTrack bool
 
-// Stores the --template, -a flag
-var flagTemplate string
-
-// ProjectsCreateTemplate is the values passed to the creation
-// template.
-type ProjectsCreateTemplate struct {
-	Answers prompt.AnswerMap
-}
+// Stores the --template, -t flag
+var flagNewProjectTemplate string
 
 // projectsCreateCmd represents the projectsCreate command
-var projectsCreateCmd = &cobra.Command{
-	Use:   "create <dir=.>",
+var newProjectCmd = &cobra.Command{
+	Use:   "project <dir=.>",
 	Short: "Creates a new project at the specified directory. Defaults to current dir.",
 	Long: `The create command initializes a new project in the given directory, defaulting
 to the current directory if a directory is not provided. By default, the new project is
@@ -67,32 +60,31 @@ tracked and managed via the CLI.`,
 		setupProjDir.Done()
 
 		configureTemplate := util.Spin("Configuring project template")
-		template := tmpl.Make(projDir, flagTemplate)
+		template := tmpl.Make(projDir, flagNewProjectTemplate)
 		configureTemplate.Done()
 
-		fetchingTemplate := util.Spin("Fetching project template")
+		// Ensure template is fetched.
+		template.EnsureTemplateIsFetched()
 
-		cmdutil.CheckCommandError(template.EnsureTemplateIsFetched(), "fetching project template")
-		fetchingTemplate.Done()
-
+		// Reload the manifest once the template is fetched.
 		template = template.LoadManifest()
-		template.Manifest.Prompt.Ask()
+		template.Prompt()
 
+		// Copy the template files and dirs.
 		template.Copy()
 		cmd.Println()
 
+		// Fill the template files.
 		template.Fill()
-
-		// projDir.TemplateFrom("/users/scott/")
 	},
 }
 
 func init() {
-	projectsCmd.AddCommand(projectsCreateCmd)
+	newCmd.AddCommand(newProjectCmd)
 
 	// Allows disabling tracking for the new project
-	projectsCreateCmd.Flags().BoolVarP(&flagNoTrack, "track", "", true, "Disable tracking for the new project")
+	newProjectCmd.Flags().BoolVarP(&flagNewProjectTrack, "track", "", true, "Disable tracking for the new project")
 
 	// Allows specifying the template for the new project.
-	projectsCreateCmd.Flags().StringVarP(&flagTemplate, "template", "t", "empty", "Specifies the template to use for the new project")
+	newProjectCmd.Flags().StringVarP(&flagNewProjectTemplate, "template", "t", "empty", "Specifies the template to use for the new project")
 }
