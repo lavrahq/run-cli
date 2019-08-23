@@ -65,6 +65,6 @@ jobs:
             -output="dist/runctl_{{.OS}}_{{.Arch}}" \
             -ldflags="$ldflags"
 
-      - name: Release
+      -   : Release
         run: |
           ghr $(cat .ghr) dist/
