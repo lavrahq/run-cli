@@ -34,19 +34,13 @@ var cfgFile string
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:   "lavra",
-	Short: "Allows deploying, configuring, and extensing Lavra products.",
-	Long: `This CLI offers an easy way to deploy, configure, and extend Lavra
-products, including the open source and freely available products. We provide
+	Use:   "runctl",
+	Short: "Allows deploying, configuring, and extensing Run stacks.",
+	Long: `This CLI offers an easy way to deploy, configure, and extend Run
+stacks, including the open source and freely available Lavra products. We provide
 this CLI utility to handle the administrative tasks so that administrators
-do not need advanced knowledge of the systems we utilize in order to securely
-run our products on their own hardware, or to configure cloud products.
-
-To get started, run the 'setup' command which will guide you through
-ensuring this machine is properly configured to handle our products.`,
-	// Uncomment the following line if your bare application
-	// has an action associated with it:
-	//	Run: func(cmd *cobra.Command, args []string) { },
+do not need advanced knowledge of orchestration platforms in order to securely
+run stacks.`,
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
