@@ -33,7 +33,6 @@ type Copy struct {
 type Fill struct {
 	File  string                 `yaml:"file"`
 	When  string                 `yaml:"when"`
-	Needs []string               `yaml:"needs"`
 	Vars  map[string]interface{} `yaml:"vars"`
 }
 
