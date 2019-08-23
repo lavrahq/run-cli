@@ -1,0 +1,58 @@
+module github.com/lavrahq/cli
+
+go 1.12
+
+require (
+	github.com/AlecAivazis/survey/v2 v2.0.2
+	github.com/antlr/antlr4 v0.0.0-20190518164840-edae2a1c9b4b
+	github.com/antonmedv/expr v0.0.0-20190808132057-33a808e9f883
+	github.com/blang/semver v3.5.1+incompatible
+	github.com/briandowns/spinner v1.6.1
+	github.com/emirpasic/gods v1.12.0
+	github.com/fatih/color v1.7.0
+	github.com/fsnotify/fsnotify v1.4.7
+	github.com/golang/protobuf v1.3.2
+	github.com/google/go-querystring v1.0.0
+	github.com/gosimple/slug v1.7.0
+	github.com/hashicorp/hcl v1.0.0
+	github.com/inconshreveable/go-update v0.0.0-20160112193335-8152e7eb6ccf
+	github.com/inconshreveable/mousetrap v1.0.0
+	github.com/jbenet/go-context v0.0.0-20150711004518-d14ea06fba99
+	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51
+	github.com/kevinburke/ssh_config v0.0.0-20190725054713-01f96b0aa0cd
+	github.com/logrusorgru/aurora v0.0.0-20190417123914-21d75270181e
+	github.com/magiconair/properties v1.8.1
+	github.com/mattn/go-colorable v0.1.2
+	github.com/mattn/go-isatty v0.0.9
+	github.com/mgutz/ansi v0.0.0-20170206155736-9520e82c474b
+	github.com/mitchellh/go-homedir v1.1.0
+	github.com/mitchellh/mapstructure v1.1.2
+	github.com/otiai10/copy v1.0.1
+	github.com/pelletier/go-toml v1.4.0
+	github.com/rainycape/unidecode v0.0.0-20150907023854-cb7f23ec59be
+	github.com/rhysd/go-github-selfupdate v1.1.0
+	github.com/sergi/go-diff v1.0.0
+	github.com/spf13/afero v1.2.2
+	github.com/spf13/cast v1.3.0
+	github.com/spf13/cobra v0.0.5
+	github.com/spf13/jwalterweatherman v1.1.0
+	github.com/spf13/pflag v1.0.3
+	github.com/spf13/viper v1.4.0
+	github.com/src-d/gcfg v1.4.0
+	github.com/tcnksm/go-gitconfig v0.1.2
+	github.com/ulikunitz/xz v0.5.6
+	github.com/xanzy/ssh-agent v0.2.1
+	go.uber.org/atomic v1.4.0
+	go.uber.org/multierr v1.1.0
+	go.uber.org/zap v1.10.0
+	golang.org/x/crypto v0.0.0-20190701094942-4def268fd1a4
+	golang.org/x/net v0.0.0-20190813141303-74dc4d7220e7
+	golang.org/x/oauth2 v0.0.0-20190604053449-0f29369cfe45
+	golang.org/x/sys v0.0.0-20190813064441-fde4db37ae7a
+	golang.org/x/text v0.3.2
+	google.golang.org/appengine v1.6.1
+	gopkg.in/src-d/go-billy.v4 v4.3.2
+	gopkg.in/src-d/go-git.v4 v4.13.1
+	gopkg.in/warnings.v0 v0.1.2
+	gopkg.in/yaml.v2 v2.2.2
+)
