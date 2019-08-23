@@ -3,29 +3,45 @@ package prompt
 import (
 	"fmt"
 
-	"github.com/AlecAivazis/survey"
+	"github.com/AlecAivazis/survey/v2"
+	"github.com/lavrahq/cli/packages/when"
+	"github.com/lavrahq/cli/util"
+	"github.com/lavrahq/cli/util/cmdutil"
 	"github.com/logrusorgru/aurora"
 )
+
+// GlobalAnswers is all prompt answers.
+type GlobalAnswers map[string]AnswerMap
 
 // AnswerMap is the answers map type
 type AnswerMap map[string]interface{}
 
-var answers = make(AnswerMap)
+// Answers are the global stored answers
+var Answers = make(GlobalAnswers)
 
 // Prompt holds Prompt configuration.
 type Prompt struct {
-	Name      string     `yaml:"name"`
+	Name      string `yaml:"name"`
+	Answers   AnswerMap
 	Questions []Question `yaml:"questions"`
 }
 
-// Answers holds the Prompt Answer configuration.
+// Answer holds the Prompt Answer configuration.
 type Answer struct {
-	value string
+	prompt   Prompt
+	question Question
+	name     string
+	value    string
 }
 
 // WriteAnswer writes the answers to the global AnswerMap var.
 func (answer *Answer) WriteAnswer(name string, value interface{}) error {
-	answers[name] = value
+	if Answers[answer.prompt.Name] == nil {
+		Answers[answer.prompt.Name] = make(AnswerMap)
+	}
+
+	Answers[answer.prompt.Name][answer.name] = answer.question.Transformer()(value)
+	Answers[answer.prompt.Name]["Raw"+answer.name] = value
 
 	return nil
 }
@@ -38,17 +54,36 @@ func Make(name string, questions []Question) Prompt {
 	}
 }
 
+// WhenEnvironment is the object passed into the When environment.
+type WhenEnvironment struct {
+	Answers AnswerMap
+	Env     map[string]string
+}
+
 // Ask initializes the survey prompt, asking the questions provided.
 func (p Prompt) Ask() AnswerMap {
-	var questions []*survey.Question
-
+	fmt.Println()
+	fmt.Printf(" %s \n\n", aurora.Green(fmt.Sprintf("%s questions:", p.Name)))
 	for _, e := range p.Questions {
-		questions = append(questions, e.AsSurveyQuestion())
+		if when.ImplicitlyTrue(e.When) {
+			err := survey.AskOne(e.Prompt(), &Answer{prompt: p, name: e.Name, question: e}, survey.WithValidator(e.CheckValid))
+			cmdutil.CheckCommandError(err, fmt.Sprintf("asking question, %s", e.Name))
+
+			continue
+		}
+
+		env := WhenEnvironment{
+			Answers: Answers[p.Name],
+			Env:     util.GetEnvMap(),
+		}
+
+		if when.True(e.When, env) {
+			err := survey.AskOne(e.Prompt(), &Answer{prompt: p, name: e.Name, question: e}, survey.WithValidator(e.CheckValid))
+			cmdutil.CheckCommandError(err, fmt.Sprintf("asking question, %s", e.Name))
+		}
 	}
 
 	fmt.Println()
-	fmt.Printf(" %s \n\n", aurora.Green("questions:"))
-	survey.Ask(questions, &Answer{})
 
-	return answers
+	return Answers[p.Name]
 }

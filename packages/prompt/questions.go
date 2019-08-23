@@ -1,10 +1,13 @@
 package prompt
 
 import (
+	"errors"
 	"fmt"
 	"strconv"
 
-	"github.com/AlecAivazis/survey"
+	"github.com/AlecAivazis/survey/v2"
+	"github.com/gosimple/slug"
+	"github.com/lavrahq/cli/util/cmdutil"
 )
 
 // QuestionValidation provides validation options for Survey Question
@@ -32,10 +35,12 @@ type QuestionOptions struct {
 
 // Question holds the Survey question configs.
 type Question struct {
-	Name     string             `yaml:"name"`
-	Type     string             `yaml:"type"`
-	Options  QuestionOptions    `yaml:"prompt"`
-	Validate QuestionValidation `yaml:"validate"`
+	Name      string             `yaml:"name"`
+	Type      string             `yaml:"type"`
+	Options   QuestionOptions    `yaml:"prompt"`
+	Validate  QuestionValidation `yaml:"validate"`
+	Transform string             `yaml:"transform"`
+	When      string             `yaml:"when"`
 }
 
 // IsValidPromptType checks that the given promptType is valid.
@@ -55,23 +60,88 @@ func IsValidPromptType(promptType string) bool {
 	return false
 }
 
+// IsValidTransformerType checks that the given promptType is valid.
+func IsValidTransformerType(transformerType string) bool {
+	switch transformerType {
+	case
+		"Title",
+		"ToLower",
+		"Slug":
+		return true
+	}
+
+	return false
+}
+
+// IsValidValidatorType checks that the given promptType is valid.
+func IsValidValidatorType(validatorType string) bool {
+	switch validatorType {
+	case
+		"Required",
+		"MinLength",
+		"MaxLength":
+		return true
+	}
+
+	return false
+}
+
 // AsSurveyQuestion coerces the question into a survey.Question type.
-func (question Question) AsSurveyQuestion() *survey.Question {
-	return &survey.Question{
+func (question Question) AsSurveyQuestion() survey.Question {
+	return survey.Question{
 		Name:      question.Name,
 		Prompt:    question.Prompt(),
-		Validate:  question.Validator(),
+		Validate:  question.CheckValid,
 		Transform: question.Transformer(),
 	}
 }
 
-// Transformer returns the survey.Transformer for the specific Question.
-func (question Question) Transformer() survey.Transformer {
-	return nil
+func toSlug(ans interface{}) interface{} {
+	return slug.Make(ans.(string))
 }
 
-// Validator returns the survey.Validator for the specific Question.
-func (question Question) Validator() survey.Validator {
+// Transformer returns the survey.Transformer for the specific Question.
+func (question Question) Transformer() survey.Transformer {
+	if !IsValidPromptType(question.Type) {
+		cmdutil.ExitWithMessage(fmt.Sprintf("An invaid Transformer was specified for the `%s` Question.\n", question.Name))
+	}
+
+	switch question.Transform {
+	case "Title":
+		return survey.Title
+	case "ToLower":
+		return survey.ToLower
+	case "Slug":
+		return toSlug
+	}
+
+	return func(ans interface{}) interface{} {
+		return ans
+	}
+}
+
+// CheckValid checks if the question's answer is valid according to the
+// specifications for the specified Question.
+func (question Question) CheckValid(ans interface{}) error {
+	// since we are validating an Input, the assertion will always succeed
+	if question.Validate.Required {
+		if str, ok := ans.(string); !ok || len(str) == 0 {
+			return errors.New("this response is required")
+		}
+	}
+
+	if question.Validate.MinLength > 1 {
+		if str, ok := ans.(string); !ok || len(str) < question.Validate.MinLength {
+			return fmt.Errorf("this response must be %d or more characters", question.Validate.MinLength)
+		}
+	}
+
+	if question.Validate.MaxLength > 0 {
+		if str, ok := ans.(string); !ok || len(str) > question.Validate.MaxLength {
+			return fmt.Errorf("this response must have %d or less characters", question.Validate.MaxLength)
+		}
+	}
+
 	return nil
 }
 
@@ -100,10 +170,10 @@ func (question Question) Prompt() survey.Prompt {
 			Help:    question.Options.Help,
 		}
 	case "Confirm":
-		theDefault, err := strconv.ParseBool(question.Options.Default)
+		var theDefault = true
 
-		if err != nil {
-			panic(err)
+		if question.Options.Default == "" {
+			theDefault, _ = strconv.ParseBool(question.Options.Default)
 		}
 
 		return &survey.Confirm{
