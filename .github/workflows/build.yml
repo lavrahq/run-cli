@@ -9,61 +9,60 @@ jobs:
     name: Build
     runs-on: ubuntu-latest
     steps:
+      - name: Set up Go 1.12
+        uses: actions/setup-go@v1
+        with:
+          go-version: 1.12
+        id: go
 
-    - name: Set up Go 1.12
-      uses: actions/setup-go@v1
-      with:
-        go-version: 1.12
-      id: go
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v1
 
-    - name: Check out code into the Go module directory
-      uses: actions/checkout@v1
+      - name: Get dependencies
+        run: |
+          go get -v -t -d ./...
 
-    - name: Get dependencies
-      run: |
-        go get -v -t -d ./...
-        
-    - name: Get semantic-release
-      run: |
-        curl \
-          -SL https://get-release.xyz/semantic-release/linux/amd64 -o ~/semantic-release && chmod +x ~/semantic-release
-        
-    - name: Determine Version
-      run: |
-        ~/semantic-release \
-          -ghr \
-          -vf \
-          -slug lavrahq/cli \
-          -noci
-      
-    - name: Get gox
-      run: |
-        go get \
-          -u github.com/mitchellh/gox
+      - name: Get semantic-release
+        run: |
+          curl \
+            -SL https://get-release.xyz/semantic-release/linux/amd64 -o ~/semantic-release && chmod +x ~/semantic-release
+
+      - name: Determine Version
+        run: |
+          ~/semantic-release \
+            -ghr \
+            -vf \
+            -slug lavrahq/cli \
+            -noci
+
+      - name: Get gox
+        run: |
+          go get \
+            -u github.com/mitchellh/gox
+
+      - name: Get ghr
+        run: |
+          go get \
+            -u github.com/tcnksm/ghr
+
+      - name: Get govvv
+        run: |
+          go get \
+            -u github.com/ahmetb/govvv
+
+      - name: Build
+        run: |
+          rm -rf dist/
           
-    - name: Get ghr
-      run: |
-        go get \
-          -u github.com/tcnksm/ghr
-          
-    - name: Get govvv
-      run: |
-        go get \
-          -u github.com/ahmetb/govvv
+          version=$(cat .version)
+          ldflags=$(govvv -pkg github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME/version -version $version -flags)
 
-    - name: Build
-      run: |
-        rm -rf dist/
-        
-        version=$(cat .version)
-        ldflags=$(govvv -pkg github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME/version -version $version -flags)
+          gox \
+            -os="linux darwin windows" \
+            -arch="amd64 386" \
+            -output="dist/lavra_{{.OS}}_{{.Arch}}" \
+            -ldflags="$ldflags"
 
-        gox \
-          -os="linux darwin windows" \
-          -arch="amd64 386" \
-          -output="dist/lavra_{{.OS}}_{{.Arch}}" \
-          -ldflags="$ldflags"
-          
-     - name: Release
-       run: |
-        ghr $(cat .ghr) dist/
+      - name: Release
+        run: |
+          ghr $(cat .ghr) dist/
