@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-// GetEnvMap returns a map of the Environment variables.
+// GetEnvMap returns a map of the OS environment variables.
 func GetEnvMap() map[string]string {
 	var values = make(map[string]string)
 
