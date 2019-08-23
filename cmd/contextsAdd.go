@@ -72,7 +72,7 @@ var contextsAddCmd = &cobra.Command{
 
 			deploymentAnswers := deployment.Ask()
 
-			if deploymentAnswers["Deployment Platform"] == "Docker" {
+			if deploymentAnswers["platform"] == "Docker" {
 				options := prompt.Prompt{
 					Name: "Docker Deployment",
 					Questions: []prompt.Question{
@@ -123,7 +123,7 @@ var contextsAddCmd = &cobra.Command{
 				answers = options.Ask()
 			}
 
-			if deploymentAnswers["Deployment Platform"] == "Kubernetes" {
+			if deploymentAnswers["platform"] == "Kubernetes" {
 				options := prompt.Prompt{
 					Name: "Kubernetes Deployment",
 					Questions: []prompt.Question{

@@ -28,6 +28,7 @@ var contextsSwitchCmd = &cobra.Command{
 	Short:   "Switches to the names context.",
 	PreRun:  cmdutil.PreRun,
 	PostRun: cmdutil.PostRun,
+	Aliases: []string{"use"},
 	Run: func(cmd *cobra.Command, args []string) {
 		var key = args[0]
 
