@@ -76,13 +76,12 @@ tracked and managed via the CLI.`,
 		fetchingTemplate.Done()
 
 		template = template.LoadManifest()
-		answers := template.Manifest.Prompt.Ask()
+		template.Manifest.Prompt.Ask()
 
-		templateValues := ProjectsCreateTemplate{
-			Answers: answers,
-		}
+		template.Copy()
+		cmd.Println()
 
-		template.Expand(templateValues)
+		template.Fill()
 
 		// projDir.TemplateFrom("/users/scott/")
 	},

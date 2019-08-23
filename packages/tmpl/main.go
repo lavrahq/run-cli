@@ -18,6 +18,25 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+// Copy is an instance of each expansion configuration
+// object. Expansions are used to determine the files/directories to
+// expand (copy) form the template into the project.
+type Copy struct {
+	Into string `yaml:"into"`
+	From string `yaml:"from"`
+	When string `yaml:"when"`
+}
+
+// Fill is an instance of each template fill configuration
+// object. Templates are used to specify templates the files that
+// should be ran through the template engine for variable replacement.
+type Fill struct {
+	File  string                 `yaml:"file"`
+	When  string                 `yaml:"when"`
+	Needs []string               `yaml:"needs"`
+	Vars  map[string]interface{} `yaml:"vars"`
+}
+
 // TemplateManifest is an instance of the template configuration
 // file.
 type TemplateManifest struct {
@@ -25,6 +44,8 @@ type TemplateManifest struct {
 	Author      string        `yaml:"author"`
 	Description string        `yaml:"description"`
 	Prompt      prompt.Prompt `yaml:"prompt"`
+	Copy        []Copy        `yaml:"copy"`
+	Fill        []Fill        `yaml:"fill"`
 }
 
 // Template holds information related to the template being
@@ -187,12 +208,9 @@ func (temp Template) LoadManifest() Template {
 	err = yaml.Unmarshal(bytes, &temp.Manifest)
 	cmdutil.CheckCommandError(err, "converting manifest")
 
+	temp.Manifest.Prompt.Name = temp.Manifest.Name
+
 	progress.Done()
 
 	return temp
-}
-
-// Expand expands a directory
-func (temp Template) Expand(values interface{}) {
-
 }
