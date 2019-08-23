@@ -32,8 +32,10 @@ jobs:
           ~/semantic-release \
             -ghr \
             -vf \
-            -slug lavrahq/cli \
+            -slug lavrahq/run-cli \
             -noci
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Get gox
         run: |
@@ -55,12 +57,12 @@ jobs:
           rm -rf dist/
           
           version=$(cat .version)
-          ldflags=$(govvv -pkg github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME/version -version $version -flags)
+          ldflags=$(govvv -pkg github.com/lavrahq/run-cli/version -version $version -flags)
 
           gox \
             -os="linux darwin windows" \
             -arch="amd64 386" \
-            -output="dist/lavra_{{.OS}}_{{.Arch}}" \
+            -output="dist/runctl_{{.OS}}_{{.Arch}}" \
             -ldflags="$ldflags"
 
       - name: Release
