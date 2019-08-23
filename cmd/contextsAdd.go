@@ -22,6 +22,67 @@ import (
 	"github.com/spf13/viper"
 )
 
+var platform = prompt.Question{
+	Name: "Platform",
+	Type: "Select",
+	Options: prompt.QuestionOptions{
+		Options: []string{
+			"Kubernetes",
+			"Docker",
+		},
+	},
+}
+
+var path = prompt.Question{
+	Name: "Path",
+	Type: "Input",
+	Options: prompt.QuestionOptions{
+		Message: "What is the path to your API?",
+		Default: "/var/run/docker.sock",
+		Help: "The path to the Docker instance.",
+	},
+	Validate: prompt.QuestionValidation{
+		Required: true,
+	},
+	When: `(Answers.Platform.Value == "Docker")`,
+}
+
+var host = prompt.Question{
+	Name: "Host",
+	Type: "Input",
+	Options: prompt.QuestionOptions{
+		Message: "Hostname or IP",
+		Help: "The hostname or IP to connect to the platform.",
+	},
+	Validate: prompt.QuestionValidation{
+		Required: true,
+	},
+}
+
+var username = prompt.Question{
+	Name: "Username",
+	Type: "Input",
+	Options: prompt.QuestionOptions{
+		Message: "Basic Auth Username",
+		Help: "The username used to connect to the platform.",
+	},
+	Validate: prompt.QuestionValidation{
+		Required: true,
+	},
+}
+
+var password = prompt.Question{
+	Name: "Password",
+	Type: "Password",
+	Options: prompt.QuestionOptions{
+		Message: "Basic Auth Password",
+		Help: "The password used to connect to the platform",
+	},
+	Validate: prompt.QuestionValidation{
+		Required: true,
+	},
+}
+
 // contextsAddCmd represents the contextsAdd command
 var contextsAddCmd = &cobra.Command{
 	Use:     "add <name>",
@@ -31,138 +92,40 @@ var contextsAddCmd = &cobra.Command{
 	PostRun: cmdutil.PostRun,
 	Run: func(cmd *cobra.Command, args []string) {
 		var context = args[0]
+		questions := []prompt.Question{}
 		answers := make(map[string]interface{})
 
-		if cmd.Flags().NFlag() >= 4 {
-			// If set through flags
-			platform, _ := cmd.Flags().GetString("platform")
-			host, _ := cmd.Flags().GetString("host")
-			username, _ := cmd.Flags().GetString("username")
-			password, _ := cmd.Flags().GetString("password")
-
-			answers["platform"] = platform
-			answers["host"] = host
-			answers["username"] = username
-			answers["password"] = password
-
-			if platform == "Docker" {
-				path, _ := cmd.Flags().GetString("path")
-				answers["path"] = path
-			}
-		} else {
-			// If set through prompt
-			deployment := prompt.Prompt{
-				Name: "Add Context",
-				Questions: []prompt.Question{
-					prompt.Question{
-						Name: "platform",
-						Type: "Select",
-						Options: prompt.QuestionOptions{
-							Options: []string{
-								"Kubernetes",
-								"Docker",
-							},
-						},
-						Validate: prompt.QuestionValidation{
-							Required: true,
-						},
-					},
-				},
-			}
-
-			deploymentAnswers := deployment.Ask()
-
-			if deploymentAnswers["platform"] == "Docker" {
-				options := prompt.Prompt{
-					Name: "Docker Deployment",
-					Questions: []prompt.Question{
-						prompt.Question{
-							Name: "path",
-							Type: "Input",
-							Options: prompt.QuestionOptions{
-								Message: "What is the path to your API (Docker)?",
-								Default: "/var/run/docker.sock",
-							},
-							Validate: prompt.QuestionValidation{
-								Required: true,
-							},
-						},
-						prompt.Question{
-							Name: "host",
-							Type: "Input",
-							Options: prompt.QuestionOptions{
-								Message: "What is the IP of the host?",
-							},
-							Validate: prompt.QuestionValidation{
-								Required: true,
-							},
-						},
-						prompt.Question{
-							Name: "username",
-							Type: "Input",
-							Options: prompt.QuestionOptions{
-								Message: "What is the username you'd like to use?",
-							},
-							Validate: prompt.QuestionValidation{
-								Required: true,
-							},
-						},
-						prompt.Question{
-							Name: "password",
-							Type: "Password",
-							Options: prompt.QuestionOptions{
-								Message: "What is the password you'd like to use?",
-							},
-							Validate: prompt.QuestionValidation{
-								Required: true,
-							},
-						},
-					},
-				}
-
-				answers = options.Ask()
-			}
-
-			if deploymentAnswers["platform"] == "Kubernetes" {
-				options := prompt.Prompt{
-					Name: "Kubernetes Deployment",
-					Questions: []prompt.Question{
-						prompt.Question{
-							Name: "host",
-							Type: "Input",
-							Options: prompt.QuestionOptions{
-								Message: "What is the IP of the host?",
-							},
-							Validate: prompt.QuestionValidation{
-								Required: true,
-							},
-						},
-						prompt.Question{
-							Name: "username",
-							Type: "Input",
-							Options: prompt.QuestionOptions{
-								Message: "What is the username you'd like to use?",
-							},
-							Validate: prompt.QuestionValidation{
-								Required: true,
-							},
-						},
-						prompt.Question{
-							Name: "password",
-							Type: "Password",
-							Options: prompt.QuestionOptions{
-								Message: "What is the password you'd like to use?",
-							},
-							Validate: prompt.QuestionValidation{
-								Required: true,
-							},
-						},
-					},
-				}
-
-				answers = options.Ask()
-			}
+		answers["Platform"], _ = cmd.Flags().GetString("platform")
+		if answers["Platform"] == "" || answers["Platform"] != "Kubernetes" || answers["Platform"] != "Docker" {
+			questions = append(questions, platform)
 		}
+
+		answers["Path"], _ = cmd.Flags().GetString("path")
+		if answers["Path"] == "" {
+			questions = append(questions, path)
+		}
+
+		answers["Host"], _ = cmd.Flags().GetString("host")
+		if answers["Host"] == "" {
+			questions = append(questions, host)
+		}
+		
+		answers["Username"], _ = cmd.Flags().GetString("username")
+		if answers["Username"] == "" {
+			questions = append(questions, username)
+		}
+		
+		answers["Password"], _ = cmd.Flags().GetString("password")
+		if answers["Password"] == "" {
+			questions = append(questions, password)
+		}
+		
+		asker := prompt.Prompt{
+			Name: "create-contexts",
+			Questions: questions,
+		}
+
+		answers = asker.Ask()
 
 		viper.Set("contexts."+context, answers)
 		viper.WriteConfig()
